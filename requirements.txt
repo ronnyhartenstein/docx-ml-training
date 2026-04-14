@@ -1,0 +1,25 @@
+# LLM Fine-Tuning (Apple Silicon / MLX)
+mlx-lm>=0.21.0
+
+# DOCX-Verarbeitung
+python-docx>=1.1.2
+
+# Token-Zählung für Chunking
+tiktoken>=0.8.0
+
+# HTTP-Client für Ollama (Q&A-Generierung)
+httpx>=0.28.0
+
+# Fortschrittsanzeige
+tqdm>=4.67.1
+
+# Web-Backend
+fastapi>=0.115.5
+uvicorn[standard]>=0.32.1
+
+# Konfiguration
+pydantic-settings>=2.6.1
+python-dotenv>=1.0.1
+
+# Testing
+pytest>=8.3.4

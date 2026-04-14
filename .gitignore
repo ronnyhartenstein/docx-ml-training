@@ -1,0 +1,26 @@
+# Daten (können groß sein)
+data/raw/
+data/extracted/
+
+# Modelle (sehr groß)
+models/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Umgebung
+.env
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Logs
+*.log
