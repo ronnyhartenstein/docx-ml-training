@@ -6,15 +6,18 @@ Lokales Fine-Tuning-System für DOCX-Fachkonzepte. Trainiert ein LLM auf den int
 
 ```
 DOCX-Dateien
-    ↓ Extraktion
+    ↓ Extraktion          (nativ, Python)
 Chunks (512 Token)
-    ↓ Q&A-Generierung (Ollama, lokal)
+    ↓ Q&A-Generierung     (nativ, Ollama)
 train.jsonl / valid.jsonl
-    ↓ LoRA Fine-Tuning (MLX, Apple Silicon)
+    ↓ LoRA Fine-Tuning    (nativ, MLX / Apple Silicon)
 Fine-Tuned Modell
-    ↓ mlx_lm.server
-Web Chat UI (http://localhost:8000)
+    ↓ mlx_lm.server       (nativ, Port 8080)
+FastAPI + Web UI          (Docker, Port 8000)
+    → http://localhost:8000
 ```
+
+Das Training und der Modell-Server laufen nativ auf dem Mac (MLX benötigt Apple Silicon / Metal GPU und ist nicht Docker-fähig). Nur der Webdienst (FastAPI + UI) läuft im Container und verbindet sich über `host.docker.internal:8080` mit dem nativen Modell-Server.
 
 ## Voraussetzungen
 
@@ -125,15 +128,27 @@ Backt den LoRA-Adapter in das Basismodell ein. Ergebnis: `models/ppsneo-finetune
 
 ---
 
-### Schritt 6 — Modell starten
+### Schritt 6 — Modell starten und Webdienst hochfahren
 
-In zwei Terminals:
+**Modell-Server** (nativ, läuft auf Apple Silicon):
 
 ```bash
-# Terminal 1: Modell-Server
 bash scripts/5_serve.sh
+```
 
-# Terminal 2: Web-API
+**Webdienst** — zwei Optionen:
+
+**Option A: Docker Compose (empfohlen)**
+
+```bash
+docker compose up -d
+```
+
+Der Container verbindet sich automatisch über `host.docker.internal:8080` mit dem nativen Modell-Server.
+
+**Option B: Direkt mit Python**
+
+```bash
 source .venv/bin/activate
 uvicorn api.main:app --reload
 ```
@@ -142,11 +157,42 @@ Web UI öffnen: **http://localhost:8000**
 
 ---
 
+## Docker
+
+Das Training läuft nativ auf dem Mac (MLX benötigt Apple Silicon / Metal GPU). Nur der Webdienst läuft im Container.
+
+```
+┌─────────────────────────── Mac (nativ) ────────────────────────────┐
+│  mlx_lm.server  →  http://localhost:8080                           │
+└────────────────────────────────────────────────────────────────────┘
+              ↑ host.docker.internal:8080
+┌─────────────────────────── Docker ─────────────────────────────────┐
+│  FastAPI + UI  →  http://localhost:8000                            │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+```bash
+# Starten
+docker compose up -d
+
+# Logs anzeigen
+docker compose logs -f
+
+# Stoppen
+docker compose down
+```
+
+Umgebungsvariablen für den Container werden direkt in der `docker-compose.yml` gesetzt (kein `.env` im Container nötig). `MLX_SERVER_HOST` ist auf `host.docker.internal` voreingestellt, damit der Container den nativen Modell-Server erreicht.
+
+---
+
 ## Projektstruktur
 
 ```
 ppsneo-docmodel/
 ├── .env                        Konfiguration (Modelle, Pfade, Ports)
+├── Dockerfile                  Web-Container (FastAPI + UI)
+├── docker-compose.yml
 ├── requirements.txt
 │
 ├── config/
@@ -197,6 +243,7 @@ ppsneo-docmodel/
 | `BASE_MODEL_PATH` | `./models/llama3.1-8b-base` | Pfad zum Basismodell |
 | `FINETUNED_MODEL_PATH` | `./models/ppsneo-finetuned` | Pfad zum fertig trainierten Modell |
 | `ADAPTER_PATH` | `./models/adapters` | LoRA-Adapter während des Trainings |
+| `MLX_SERVER_HOST` | `localhost` | Host des Modell-Servers (`host.docker.internal` im Container) |
 | `MLX_SERVER_PORT` | `8080` | Port des Modell-Servers |
 | `API_PORT` | `8000` | Port der Web-API |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama-Adresse |
@@ -267,6 +314,9 @@ data: [DONE]
 
 **MLX-Server nicht erreichbar (503 in der UI)**
 → `bash scripts/5_serve.sh` ausführen, warten bis "Server started" erscheint
+
+**Docker-Container erreicht den MLX-Server nicht**
+→ Sicherstellen, dass `mlx_lm.server` auf dem Mac läuft und `MLX_SERVER_HOST=host.docker.internal` in `docker-compose.yml` gesetzt ist
 
 **DOCX-Datei wird nicht korrekt geparst**
 → Dateinamen-Muster in `extraction/filename_parser.py` prüfen; Metadaten werden auch ohne korrektes Muster extrahiert (Fallback)

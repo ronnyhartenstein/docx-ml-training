@@ -1,0 +1,15 @@
+.git/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+data/
+models/
+.env
+*.md
+scripts/
+extraction/
+training_data/qa_generator.py
+training_data/dataset_builder.py
+model/

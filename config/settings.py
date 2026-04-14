@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     adapter_path: str = "./models/adapters"
 
     # Server-Ports
+    mlx_server_host: str = "localhost"
     mlx_server_port: int = 8080
     api_port: int = 8000
 
@@ -45,7 +46,7 @@ class Settings(BaseSettings):
 
     @property
     def mlx_server_url(self) -> str:
-        return f"http://localhost:{self.mlx_server_port}"
+        return f"http://{self.mlx_server_host}:{self.mlx_server_port}"
 
 
 settings = Settings()
